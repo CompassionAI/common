@@ -58,11 +58,11 @@ class CorpusLoader(object):
 
         super().__init__()
         if glob_prefix is None:
-            self.glob_prefix = os.environ['CAI_DATA_BASE_PATH']
+            glob_prefix = os.environ['CAI_DATA_BASE_PATH']
         if glob_override is not None:
             self.data_glob = glob_override
         else:
-            self.data_glob = os.path.join(self.glob_prefix, self.data_glob)
+            self.data_glob = os.path.join(glob_prefix, self.data_glob)
 
     def _process_bag(self, bag, locators):
         # Apply whatever map functions or other processing to the Dask bag after loading the files and before splitting
