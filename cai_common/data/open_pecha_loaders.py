@@ -31,15 +31,15 @@ class OpenPechaLoader(CorpusLoader):
     _remove_new_lines = False
 
     def __init__(self,
-                 glob_prefix,
+                 glob_prefix=None,
                  glob_override=None,
                  test_mode=False):
         """Constructor for a corpus loader from an OpenPecha repository. The default settings are to apply markup, not
         to replace with suggestions in the markup, to clean up bad characters, and to remove section headings.
 
         Args:
-            glob_prefix: The prefix to the current path for the location of the repo that contains this corpus. It will
-                be concatenated with data_glob to get the full path. For example: ../../tibert_data
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
+                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
                 example: ../../tibert_data/OpenPecha/P000001/*.txt
             test_mode: When applying markup, retain the original and the markup being applied. Formatted as @(x,y)|res@
@@ -48,7 +48,7 @@ class OpenPechaLoader(CorpusLoader):
         """
 
         super().__init__(
-            glob_prefix,
+            glob_prefix=glob_prefix,
             glob_override=glob_override)
         self.test_mode = test_mode
 
@@ -160,15 +160,15 @@ class KangyurLoader(OpenPechaLoader):
     data_glob = "OpenPecha/P000001/*.txt"
 
     def __init__(self,
-                 glob_prefix,
+                 glob_prefix=None,
                  glob_override=None,
                  test_mode=False):
         """Constructor for the Kangyur loader from the OpenPecha repository. The default settings are to apply markup,
         not to replace with suggestions in the markup, to clean up bad characters, and to remove section headings.
 
         Args:
-            glob_prefix: The prefix to the current path for the location of the repo that contains this corpus. It will
-                be concatenated with data_glob to get the full path. For example: ../../tibert_data
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
+                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
                 example: ../../tibert_data/OpenPecha/P000001/*.txt
             test_mode: When applying markup, retain the original and the markup being applied. Formatted as @(x,y)|res@
@@ -177,7 +177,7 @@ class KangyurLoader(OpenPechaLoader):
         """
 
         super().__init__(
-            glob_prefix,
+            glob_prefix=glob_prefix,
             glob_override=glob_override,
             test_mode=test_mode)
 
@@ -240,15 +240,15 @@ class TengyurLoader(OpenPechaLoader):
     data_glob = "derge-tengyur/text/*.txt"
 
     def __init__(self,
-                 glob_prefix,
+                 glob_prefix=None,
                  glob_override=None,
                  test_mode=False):
         """Constructor for the Tengyur loader from the Esukhia repository. The default settings are to apply markup,
         not to replace with suggestions in the markup, to clean up bad characters, and to remove section headings.
 
         Args:
-            glob_prefix: The prefix to the current path for the location of the repo that contains this corpus. It will
-                be concatenated with data_glob to get the full path. For example: ../../tibert_data
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
+                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
                 example: ../../tibert_data/derge-tengyur/text/*.txt
             test_mode: When applying markup, retain the original and the markup being applied. Formatted as @(x,y)|res@
@@ -257,7 +257,7 @@ class TengyurLoader(OpenPechaLoader):
         """
 
         super().__init__(
-            glob_prefix,
+            glob_prefix=None,
             glob_override=glob_override,
             test_mode=test_mode)
 

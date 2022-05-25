@@ -76,19 +76,19 @@ class ParallelTXMLoader(CorpusLoader):
     bad_chars = _bad_chars
 
     def __init__(self,
-                 glob_prefix,
+                 glob_prefix=None,
                  glob_override=None):
         """Constructor for a corpus loader for the parallel sentences dataset from 84,000. The default settings are to
             apply markup, not to replace with suggestions in the markup, and to clean up bad characters.
 
         Args:
-            glob_prefix: The prefix to the current path for the location of the repo that contains this corpus. It will
-                be concatenated with data_glob to get the full path. For example: ../../tibert_data
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
+                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
                 example: ../../tibert_data/OpenPecha/P000001/*.txt
         """
 
-        super().__init__(glob_prefix, glob_override=glob_override)
+        super().__init__(glob_prefix=glob_prefix, glob_override=glob_override)
 
     def apply_markup(self, apply=True, replace_with_suggested=False):
         """Set whether to apply the markup for suggested replacements within the corpus.

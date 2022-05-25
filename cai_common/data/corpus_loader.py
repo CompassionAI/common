@@ -45,22 +45,24 @@ class CorpusLoader(object):
     glob_exclusions = set()
 
     def __init__(self,
-                 glob_prefix,
+                 glob_prefix=None,
                  glob_override=None):
         """Constructor for a corpus loader.
 
         Args:
-            glob_prefix: The prefix to the current path for the location of the repo that contains this corpus. It will
-                be concatenated with data_glob to get the full path. For example: ../../tibert_data
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
+                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
                 example: ../../tibert_data/OpenPecha/P000001/*.txt
         """
 
         super().__init__()
+        if glob_prefix is None:
+            self.glob_prefix = os.environ['CAI_DATA_BASE_PATH']
         if glob_override is not None:
             self.data_glob = glob_override
         else:
-            self.data_glob = os.path.join(glob_prefix, self.data_glob)
+            self.data_glob = os.path.join(self.glob_prefix, self.data_glob)
 
     def _process_bag(self, bag, locators):
         # Apply whatever map functions or other processing to the Dask bag after loading the files and before splitting

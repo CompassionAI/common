@@ -148,24 +148,24 @@ class TeiLoader(CorpusLoader):
     ref_types_to_strip = {'bampo', 'sanskrit', 'volume'}
 
     def __init__(self,
-                 glob_prefix,
                  tei_corpus,
+                 glob_prefix=None,
                  glob_override=None):
         """Constructor for a corpus loader for the 84,000 TEI translation files.
 
         Args:
-            glob_prefix: The prefix to the current path for the location of the repo that contains this corpus. It will
-                be concatenated with data_glob to get the full path. For example: ../../tibert_data
             tei_corpus: Which of the 84,000 translated corpora to load. It is used to form the directory that the XML
                 files are in: 84000/data-tei/translations/{tei_corpus}/translations. Currently, can be kangyur or
                 tengyur.
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
+                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
                 example: ../../tibert_data/84000/data-tei/translations/kangyur/translations/*.xml
         """
 
         self.data_glob = self.data_glob.format(corpus=tei_corpus)
         super().__init__(
-            glob_prefix,
+            glob_prefix=glob_prefix,
             glob_override=glob_override)
 
     def _process_bag(self, bag, locators):
