@@ -33,19 +33,22 @@ class TibetanDict(object):
     separator = '|'
 
     def __init__(self,
-                 glob_prefix,
+                 glob_prefix=None,
                  glob_override=None,
                  default_encoding=TibetanEncoding.UNICODE):
         """Constructor for a Tibetan dictionary.
 
         Args:
-            glob_prefix: The prefix to the current path for the location of the repo that contains the dictionary
-                files. It will be concatenated with dict_glob to get the full path. For example: ../../tibert_data
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains the
+                dictionary files. It will be concatenated with dict_glob to get the full path. For example:
+                ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
                 example: ../../dictionaries/all/*
         """
 
         super().__init__()
+        if glob_prefix is None:
+            glob_prefix = os.environ['CAI_DATA_BASE_PATH']
         if glob_override is not None:
             self.dict_glob = glob_override
         else:
