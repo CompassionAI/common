@@ -51,9 +51,10 @@ class CorpusLoader(object):
 
         Args:
             glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
-                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
+                corpus. It will be concatenated with data_glob to get the full path. Defaults to the value of the
+                CAI_DATA_BASE_PATH environment variable
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
-                example: ../../tibert_data/OpenPecha/P000001/*.txt
+                example: ../../my_data/OpenPecha/P000001/*.txt
         """
 
         super().__init__()

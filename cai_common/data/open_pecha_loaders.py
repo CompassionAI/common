@@ -39,9 +39,10 @@ class OpenPechaLoader(CorpusLoader):
 
         Args:
             glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
-                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
+                corpus. It will be concatenated with data_glob to get the full path. Defaults to the value of the
+                CAI_DATA_BASE_PATH environment variable
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
-                example: ../../tibert_data/OpenPecha/P000001/*.txt
+                example: ../../my_data/OpenPecha/P000001/*.txt
             test_mode: When applying markup, retain the original and the markup being applied. Formatted as @(x,y)|res@
                 where res is either x or y depending on the setting of replace_with_suggested given in apply_markup.
                 Defaults to False, intended for testing the markup application.
@@ -112,12 +113,15 @@ class OpenPechaLoader(CorpusLoader):
     def _format_folio_locator(self, match):
         raise NotImplementedError()
 
+    def _get_volume_num_from_fn(self, fn):
+        return int(fn.split("_")[0])
+
     def _segment_folios(self, args):
         # Segment folios using the folio marker regular expression by stepping through successive folio marker matches
         #   and taking the text in between. Also converts the Tibetan numerals for page markers into 84,000-style folio
         #   locators of the form F.page.a(verso)/b(recto).
         fn, volume_str = args
-        volume_num = int(fn.split("_")[0])
+        volume_num = self._get_volume_num_from_fn(fn)
         res, cur_ref, last_loc = [], None, None
         for match in self._folio_marker_re.finditer(volume_str):
             cur_loc_start, cur_loc_end = match.span()
@@ -146,18 +150,19 @@ class OpenPechaLoader(CorpusLoader):
         return bag
 
 
-class KangyurLoader(OpenPechaLoader):
-    """Esukhia Derge Kangyur corpus loader. Source repo is https://github.com/OpenPecha/P000001.
+class OldKangyurLoader(OpenPechaLoader):
+    """Esukhia Derge Kangyur corpus loader. This is for the old version of the eKangyur, archived in our data registry
+        under OpenPecha-kangyur-old.
 
     Attributes:
         data_glob: A glob for the location of the data after the prefix that locates the repo. The prefix is specified
-            in the constructor. Defaults to: OpenPecha/P000001/*.txt
+            in the constructor. Defaults to: raw_datasets/OpenPecha-kangyur-old/*.txt
     """
 
     _df_column_names = ["filename", "volume_number", "location", "text"]
     _df_meta = [['a'], ['a'], ['a'], ['a']]
     _folio_marker_re = re.compile(r"\(([{}]+)([ནབ])་\)".format(''.join(tibetan_digits)))
-    data_glob = "OpenPecha/P000001/*.txt"
+    data_glob = "raw_datasets/OpenPecha-kangyur-old/*.txt"
 
     def __init__(self,
                  glob_prefix=None,
@@ -168,9 +173,10 @@ class KangyurLoader(OpenPechaLoader):
 
         Args:
             glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
-                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
+                corpus. It will be concatenated with data_glob to get the full path. Defaults to the value of the
+                CAI_DATA_BASE_PATH environment variable
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
-                example: ../../tibert_data/OpenPecha/P000001/*.txt
+                example: ../../my_data/OpenPecha/P000001/*.txt
             test_mode: When applying markup, retain the original and the markup being applied. Formatted as @(x,y)|res@
                 where res is either x or y depending on the setting of replace_with_suggested given in apply_markup.
                 Defaults to False, intended for testing the markup application.
@@ -186,6 +192,10 @@ class KangyurLoader(OpenPechaLoader):
         #   form F.page.a(verso)/b(recto).
         return "F.{}.{}".format(translate_tibetan_number(match.group(1)), 'a' if match.group(2) == 'ན' else 'b')
 
+    def _preprocess_bag(self, bag, locators):
+        # Child classes can inherit this to do their own processing before this class mangles the text
+        return bag
+
     def _process_bag(self, bag, locators):
         # Prepares a bag, with or without locators as indicated. Applies folio segmentation, removes spaces, and
         #   removes locators if requested.
@@ -200,6 +210,7 @@ class KangyurLoader(OpenPechaLoader):
         #    3. Remove unmatched commas, brackets, stars, the BOM, etc (leaves small number of bad morphemes that are
         #       very hard to clean)
         bag = super()._process_bag(bag, locators)
+        bag = self._preprocess_bag(bag, locators)
         if self._apply_markup:
             # Have to repeat twice because some brackets are nested to depth 2
             bag = bag.map(lambda args: _apply_with_locators(
@@ -227,6 +238,75 @@ class KangyurLoader(OpenPechaLoader):
         return bag
 
 
+class KangyurLoader(OldKangyurLoader):
+    """Esukhia Derge Kangyur corpus loader. This is for the new version of the eKangyur, stored in our data registry
+        under OpenPecha-kangyur.
+
+    Note that it is currently not paginated.
+
+    Attributes:
+        data_glob: A glob for the location of the data after the prefix that locates the repo. The prefix is specified
+            in the constructor. Defaults to: raw_datasets/OpenPecha-kangyur/*.txt
+    """
+
+    _df_column_names = ["filename", "volume_number", "location", "text"]
+    _df_meta = [['a'], ['a'], ['a'], ['a']]
+    _folio_marker_re = re.compile("\n\n")
+    _uuid_re = re.compile("OpenPechaUUID:[\w{6,6}]")
+    _remove_uuids = True
+    data_glob = "raw_datasets/OpenPecha-kangyur/*.txt"
+
+    def __init__(self,
+                 glob_prefix=None,
+                 glob_override=None,
+                 test_mode=False):
+        """Constructor for the Kangyur loader from the OpenPecha repository. The default settings are to remove the
+            OpenPechaUUID's.
+
+        Args:
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
+                corpus. It will be concatenated with data_glob to get the full path. Defaults to the value of the
+                CAI_DATA_BASE_PATH environment variable
+            glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
+                example: ../../my_data/OpenPecha/P000001/*.txt
+        """
+
+        super().__init__(
+            glob_prefix=glob_prefix,
+            glob_override=glob_override,
+            test_mode=False)
+
+    def remove_uuids(self, remove=True):
+        """Set whether to remove OpenPechaUUIDs from the corpus.
+
+        Args:
+            clean: Remove uuids if True. Defaults to True.
+
+        Returns:
+            The corpus loader object so that methods can be chained in the functional style.
+        """
+
+        self._remove_uuids = remove
+        return self
+
+    def _format_folio_locator(self, match):
+        # Currently unpaginated. This is because the pagination in the OpenPecha repo doesn't have the recto/verso
+        #   tags preserved, and is instead matched to the names of the image files.
+        return ""
+
+    def _get_volume_num_from_fn(self, fn):
+        return int(fn.split("_")[0][1:])
+
+    def _preprocess_bag(self, bag, locators):
+        # Removes the OpenPechaUUIDs if requested to remove section headings
+        if self._remove_uuids:
+            bag = bag.map(lambda args: _apply_with_locators(
+                args,
+                lambda x: re.sub(r"OpenPechaUUID:\w{6,6}", '', x),
+                locators))
+        return bag
+
+
 class TengyurLoader(OpenPechaLoader):
     """Esukhia Derge Tengyur corpus loader. Source repo is https://github.com/Esukhia/derge-tengyur.
 
@@ -248,9 +328,10 @@ class TengyurLoader(OpenPechaLoader):
 
         Args:
             glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
-                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
+                corpus. It will be concatenated with data_glob to get the full path. Defaults to the value of the
+                CAI_DATA_BASE_PATH environment variable
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
-                example: ../../tibert_data/derge-tengyur/text/*.txt
+                example: ../../my_data/derge-tengyur/text/*.txt
             test_mode: When applying markup, retain the original and the markup being applied. Formatted as @(x,y)|res@
                 where res is either x or y depending on the setting of replace_with_suggested given in apply_markup.
                 Defaults to False, intended for testing the markup application.
