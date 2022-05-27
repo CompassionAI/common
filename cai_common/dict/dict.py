@@ -19,7 +19,7 @@ class TibetanDict(object):
         dict_glob (iterable(str) or str): If a string then this is a glob for the location of dictionaries after the
             prefix that locates the repo. If an iterable of strings then each string is treated as a glob and the
             results are unioned to get all the dictionary files.  Defaults to the string
-            dictionaries/all
+            raw_datasets/tibetan-english-dictionaries/*
         glob_exclusions (iterable(str)): Filenames to exclude from the data glob when loading the dictionaries. Use for
             known bad files. NB: this is not a glob.
         separator (char): The separator character in the dictionary files. To the left of the character is Tibetan in
@@ -28,7 +28,7 @@ class TibetanDict(object):
 
     _dictionary = {}
     _default_encoding = TibetanEncoding.UNICODE
-    dict_glob = "dictionaries/all/*"
+    dict_glob = "raw_datasets/tibetan-english-dictionaries/*"
     glob_exclusions = set()
     separator = '|'
 
@@ -43,7 +43,7 @@ class TibetanDict(object):
                 dictionary files. It will be concatenated with dict_glob to get the full path. For example:
                 ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
-                example: ../../dictionaries/all/*
+                example: ../../raw_datasets/tibetan-english-dictionaries/*
         """
 
         super().__init__()
