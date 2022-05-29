@@ -317,7 +317,7 @@ class TengyurLoader(OpenPechaLoader):
 
     _df_column_names = ["filename", "volume_number", "location", "text"]
     _folio_marker_re = re.compile(r"\[([\d]+)([ab])\]")
-    data_glob = "derge-tengyur/text/*.txt"
+    data_glob = "raw_datasets/Esukhia-derge-tengyur/text/*.txt"
 
     def __init__(self,
                  glob_prefix=None,
@@ -338,7 +338,7 @@ class TengyurLoader(OpenPechaLoader):
         """
 
         super().__init__(
-            glob_prefix=None,
+            glob_prefix=glob_prefix,
             glob_override=glob_override,
             test_mode=test_mode)
 
