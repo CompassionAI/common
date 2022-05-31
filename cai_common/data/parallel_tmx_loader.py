@@ -7,7 +7,7 @@ from .utils import repl_split_commas_or_kill
 
 _strip_chars = {'!'}
 _bad_chars = {
-    '_', 'a', 'b', 'c', 'd', 'e', 'f', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'y'}
+    '_', 'a', 'b', 'c', 'd', 'e', 'f', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'y', '\u200b'}
 
 
 def _strip_out_pairs(soup, strip_chars, bad_chars, apply_markup, replace_with_suggested):
@@ -59,7 +59,7 @@ class ParallelTMXLoader(CorpusLoader):
 
     Attributes:
         data_glob: A glob for the location of the data after the prefix that locates the repo. The prefix is specified
-            in the constructor. Defaults to: 84000/data-translation-memory/*.tmx
+            in the constructor. Defaults to: raw_datasets/84000-parallel-sentences/*.tmx
         strip_chars (set of characters): Set of characters to delete from the Tibetan strings.
         bad_chars (set of characters): Any Tibetan string that contains a character in this set is removed from the
             dataset and its pair is skipped.
@@ -71,7 +71,7 @@ class ParallelTMXLoader(CorpusLoader):
     _replace_with_suggested = False
     _clean_bad_chars = True
 
-    data_glob = "84000/data-translation-memory/*.tmx"
+    data_glob = "raw_datasets/84000-parallel-sentences/*.tmx"
     strip_chars = _strip_chars
     bad_chars = _bad_chars
 
@@ -83,9 +83,9 @@ class ParallelTMXLoader(CorpusLoader):
 
         Args:
             glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
-                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
+                corpus. It will be concatenated with data_glob to get the full path. For example: ../../my_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
-                example: ../../tibert_data/OpenPecha/P000001/*.txt
+                example: ../../my_data/84000/data-translation-memory/*.txt
         """
 
         super().__init__(glob_prefix=glob_prefix, glob_override=glob_override)
