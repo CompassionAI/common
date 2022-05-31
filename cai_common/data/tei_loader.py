@@ -117,13 +117,18 @@ class TeiLoader(CorpusLoader):
     _df_meta = [['a'], ['a'], ['a'], ['a']]
     _df_final_columns = ["filename", "volume_number", "tohoku_number", "location", "text"]
 
-    data_glob = "84000/data-tei/translations/{corpus}/translations/*.xml"
+    data_glob = "raw_datasets/84000-translations-tei/translations/{corpus}/translations/*.xml"
     glob_exclusions = {
         '079-008_toh381OLD-the_emergence_from_samputa%20(20190216).xml',
         '040-005_toh54-the_chapter_on_the_complete_approach.xml',
+        '043-006_toh69-arousing_determination.xml',
+        '043-006_toh69-the_sutra_which_incites_resolve.xml',
         '057-010_toh151-the_sutra_of_the_questions_of_pratibhanamati.xml',
+        '061-012_toh192-the_prophecy_of_ksemavati.xml',
         '066-007_toh249-the_sutra_teaching_four_qualities.xml',
-        '077-002_toh361-a_summary_explanation_of_the_initiation.xml'}
+        '067-005_toh266-the_sutra_of_the_flower_collection.xml',
+        '077-002_toh361-a_summary_explanation_of_the_initiation.xml',
+        '094-006_toh729,1001-the_incantation_of_tara.xml'}
     ns = "http://www.tei-c.org/ns/1.0"
     tag_treatments = {
         'term': 'unwrap',
@@ -144,7 +149,9 @@ class TeiLoader(CorpusLoader):
         'list': 'unwrap',
         'item': 'unwrap',
         'label': 'decompose',
-        'canonDef': 'unwrap'}
+        'canonDef': 'unwrap',
+        'media': 'decompose',
+        'fix': 'decompose'}
     ref_types_to_strip = {'bampo', 'sanskrit', 'volume'}
 
     def __init__(self,
@@ -154,13 +161,13 @@ class TeiLoader(CorpusLoader):
         """Constructor for a corpus loader for the 84,000 TEI translation files.
 
         Args:
+            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
+                corpus. It will be concatenated with data_glob to get the full path. For example: ../../my_data
             tei_corpus: Which of the 84,000 translated corpora to load. It is used to form the directory that the XML
                 files are in: 84000/data-tei/translations/{tei_corpus}/translations. Currently, can be kangyur or
                 tengyur.
-            glob_prefix (optional): The prefix to the current path for the location of the repo that contains this
-                corpus. It will be concatenated with data_glob to get the full path. For example: ../../tibert_data
             glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
-                example: ../../tibert_data/84000/data-tei/translations/kangyur/translations/*.xml
+                example: ../../my_data/84000/data-tei/translations/kangyur/translations/*.xml
         """
 
         self.data_glob = self.data_glob.format(corpus=tei_corpus)
