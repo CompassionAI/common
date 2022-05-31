@@ -1,7 +1,7 @@
 from .corpus_loader import CorpusSplitType
 from .open_pecha_loaders import OldKangyurLoader, KangyurLoader, TengyurLoader
 from .tei_loader import TeiLoader
-from .parallel_txm_loader import ParallelTXMLoader
+from .parallel_tmx_loader import ParallelTMXLoader
 
 __all__ = [
     'CorpusSplitType',
@@ -9,4 +9,4 @@ __all__ = [
     'KangyurLoader',
     'TengyurLoader',
     'TeiLoader',
-    'ParallelTXMLoader']
+    'ParallelTMXLoader']

@@ -53,7 +53,7 @@ def _process(args,
         return [(tibetan, english) for _, _, tibetan, english in cur_pairs]
 
 
-class ParallelTXMLoader(CorpusLoader):
+class ParallelTMXLoader(CorpusLoader):
     """Loader for the parallel sentences dataset from 84,000. Source repo is
         https://github.com/84000/data-translation-memory.
 

@@ -9,7 +9,7 @@ import random
 import unicodedata
 from copy import deepcopy
 
-from cai_common.data import ParallelTXMLoader, TeiLoader, KangyurLoader
+from cai_common.data import ParallelTMXLoader, TeiLoader, KangyurLoader
 
 DATA_BASE_PATH = os.environ['TIBERT_DATA_BASE_PATH']
 
@@ -67,7 +67,7 @@ def _pull_parallel_dataset(dask_client, args):
     # Loads flat training and test datasets of parallel sentences into memory from Dask
     print("Creating dataframe...", end=' ', flush=True)
 
-    ParallelTXMLoader.data_glob = os.path.join(args.parallel_dataset_location, "*.tmx")
+    ParallelTMXLoader.data_glob = os.path.join(args.parallel_dataset_location, "*.tmx")
     if args.sort_by_starting_index:
         folio_df = TeiLoader(DATA_BASE_PATH, 'kangyur').dataframe
         folio_df['locator'] = folio_df \
@@ -76,7 +76,7 @@ def _pull_parallel_dataset(dask_client, args):
             .map(lambda x: x.replace('toh', '')) + '|' + folio_df.location.fillna('').str.lower()
         folio_df = folio_df.set_index('locator')
 
-        parallel_df = ParallelTXMLoader(DATA_BASE_PATH) \
+        parallel_df = ParallelTMXLoader(DATA_BASE_PATH) \
             .apply_markup() \
             .clean_bad_chars() \
             .dataframe
@@ -92,7 +92,7 @@ def _pull_parallel_dataset(dask_client, args):
         joined_df = joined_df[joined_df.start_idx >= 0]
         txm_df = dask_client.persist(joined_df)[["tohoku", "tibetan", "english", "location", "start_idx"]]
     else:
-        txm_df = ParallelTXMLoader(DATA_BASE_PATH) \
+        txm_df = ParallelTMXLoader(DATA_BASE_PATH) \
             .apply_markup() \
             .clean_bad_chars() \
             .dataframe
