@@ -91,7 +91,9 @@ class TokenTagDataset(TorchDataset):
         if not os.path.isfile(self.processed_dataset):
             raise FileNotFoundError("Preprocessed data not found.")
 
-        lock_path = self.processed_dataset + ".lock"
+        lock_path = os.path.join(
+            os.environ['CAI_TEMP_PATH'],
+            os.path.basename(self.processed_dataset.replace('/', '_').replace('\\', '_')) + ".lock")
         with FileLock(lock_path):
             with open(self.processed_dataset, 'rb') as f:
                 self.tokenized_data = pickle.load(f)
