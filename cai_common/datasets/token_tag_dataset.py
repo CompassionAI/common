@@ -168,7 +168,9 @@ class TokenTagDataset(TorchDataset):
             logger.warning(f"Skipped {skipped_examples} examples")
 
     def __len__(self):
+        # Return dataset length
         return len(self.examples)
 
     def __getitem__(self, i):
+        # Return the i-th item from the dataset
         return self.examples[i]

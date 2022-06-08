@@ -3,6 +3,7 @@ import random
 
 
 def main(args):
+    # Shuffle two files in parallel. Useful for parallel training data preparation.
     with open(args.input_file + '.bo', 'r', encoding='utf-8') as f_bo, open(args.input_file + '.en', 'r') as f_en:
         bo_lines, en_lines = f_bo.readlines(), f_en.readlines()
     combined = list(zip(bo_lines, en_lines))
