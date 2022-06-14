@@ -66,7 +66,6 @@ def _process_fstr(args):
     soup = BeautifulSoup(
         fstr,
         'xml',
-        from_encoding='UTF8',
         parse_only=SoupStrainer("div", type="translation"))
     return [
         (text_name, toh_key, ref, text)
