@@ -35,24 +35,33 @@ def _treat_divs_and_refs(soup, toh_key, num_toh_keys, refs_to_strip):
 def _segment_folios(soup, toh_key):
     # Iterate through the processed XML soup in parsing order and segment it into folios using the remaining ref tags.
     #   Return the segmentation.
+    valid_tag_types = {'folio', 'volume'}
     space_re = re.compile(r"\s+")
-    segmentation, cur_ref, cur_text = [], None, ''
+    segmentation, cur_volume, cur_ref, cur_text = [], None, None, ''
     for elem in soup.next_elements:
         if type(elem) is NavigableString:
             cur_text += space_re.sub(' ', elem.string)
         elif type(elem) is Tag:
-            if not elem.name == 'ref' or not elem.attrs.get('type', 'folio') == 'folio':
+            elem_type = elem.attrs.get('type', 'folio')
+            if not (elem.name == 'ref' and elem_type in valid_tag_types):
                 raise ValueError("Bad tag: name {}, type {}, tohoku number {}".format(
                     elem.name, elem.attrs.get('type', 'none'), toh_key))
-            segmentation.append((cur_ref, cur_text))
-            cur_text, cur_ref = '', elem['cRef']
+            segmentation.append((cur_volume, cur_ref, cur_text))
+            if elem_type == 'folio':
+                cur_text, cur_ref = '', elem['cRef']
+            elif elem_type == 'volume':
+                cur_volume = elem['cRef']
+                if not (cur_volume[0] == 'V' and cur_volume[1:].isdigit()):
+                    raise ValueError(f"Badly formatted volume number {cur_volume} in tag name {elem.name}, type "
+                                     f"{elem.attrs.get('type', 'none')}, tohoku number {toh_key}")
+                cur_volume = int(cur_volume[1:])
         elif type(elem) is Comment:
             pass
         elif type(elem) is XMLProcessingInstruction:
             pass
         else:
             raise ValueError("Bad tag {}".format(elem))
-    segmentation.append((cur_ref, cur_text))
+    segmentation.append((cur_volume, cur_ref, cur_text))
     return segmentation
 
 
@@ -68,8 +77,8 @@ def _process_fstr(args):
         'xml',
         parse_only=SoupStrainer("div", type="translation"))
     return [
-        (text_name, toh_key, ref, text)
-        for ref, text in _segment_folios(
+        (text_name, toh_key, volume, ref, text)
+        for volume, ref, text in _segment_folios(
             _treat_divs_and_refs(
                 _treat_tags(soup, tag_treatments), toh_key, num_toh_keys, refs_to_strip), toh_key)]
 
@@ -112,9 +121,9 @@ class TeiLoader(CorpusLoader):
     """
 
     # Additional columns like volume_number are added after parent class generates _df_column_names
-    _df_column_names = ["filename", "tohoku_number", "location", "text"]
-    _df_meta = [['a'], ['a'], ['a'], ['a']]
-    _df_final_columns = ["filename", "volume_number", "tohoku_number", "location", "text"]
+    _df_column_names = ["filename", "tohoku_number", "volume_number", "location", "text"]
+    _df_meta = [['a'], ['a'], ['a'], ['a'], ['a']]
+    _df_final_columns = ["filename", "tohoku_number", "volume_number", "location", "text"]
 
     data_glob = "raw_datasets/84000-translations-tei/translations/{corpus}/translations/*.xml"
     glob_exclusions = {
@@ -151,7 +160,7 @@ class TeiLoader(CorpusLoader):
         'canonDef': 'unwrap',
         'media': 'decompose',
         'fix': 'decompose'}
-    ref_types_to_strip = {'bampo', 'sanskrit', 'volume'}
+    ref_types_to_strip = {'bampo', 'sanskrit'}
 
     def __init__(self,
                  tei_corpus,
@@ -190,6 +199,8 @@ class TeiLoader(CorpusLoader):
     @property
     def dataframe(self):
         res_df = super().dataframe
-        res_df["volume_number"] = res_df.filename.map(lambda x: x.split('-')[0]).astype(int)
+        res_df["volume_number"] = res_df["volume_number"].fillna(
+            res_df.filename.map(lambda x: x.split('-')[0])) \
+            .astype(int)
         res_df = res_df[self._df_final_columns]
         return res_df
