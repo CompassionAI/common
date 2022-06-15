@@ -42,8 +42,8 @@ class TibetanDict(object):
             glob_prefix (optional): The prefix to the current path for the location of the repo that contains the
                 dictionary files. It will be concatenated with dict_glob to get the full path. For example:
                 ../../tibert_data
-            glob_override (optional): Overrides the entire file path glob to specify the location of the corpus. For
-                example: ../../raw_datasets/tibetan-english-dictionaries/*
+            glob_override (optional): Overrides the postfix file path glob to specify the location of the corpus inside
+                the data registry. For example: raw_datasets/tibetan-english-dictionaries/*
         """
 
         super().__init__()
@@ -51,8 +51,7 @@ class TibetanDict(object):
             glob_prefix = os.environ['CAI_DATA_BASE_PATH']
         if glob_override is not None:
             self.dict_glob = glob_override
-        else:
-            self.dict_glob = os.path.join(glob_prefix, self.dict_glob)
+        self.dict_glob = os.path.join(glob_prefix, self.dict_glob)
         self._dict_files = open_globs(self.dict_glob, self.glob_exclusions)
         self._ewts_converter = pyewts.pyewts()
         self._default_encoding = default_encoding
