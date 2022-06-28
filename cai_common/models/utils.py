@@ -3,7 +3,7 @@ import glob
 import json
 
 
-def get_local_ckpt(model_name):
+def get_local_ckpt(model_name, model_dir=False):
     """Convert the name of the model in the CAI data registry to a local checkpoint path.
 
     Args:
@@ -12,8 +12,11 @@ def get_local_ckpt(model_name):
             within the data registry. Otherwise, it is assumed to be a champion model inside the champion_models
             directory.
 
-            If model name has no extension, it checks if there is only one .bin file in the path the model name resolves
-            to. If there is more than one, it crashes, otherwise it returns the path to this .bin file.
+            If model name has no extension, and model_dir is False, it checks if there is only one .bin file in the path
+            the model name resolves to. If there is more than one, it crashes, otherwise it returns the path to this
+            .bin file.
+        model_dir (:obj:`bool`): Return the model directory, not a candidate bin file. Useful for Hugging Face local
+            loading using from_pretrained.
 
     Returns:
         The local directory name you can feed to AutoModel.from_pretrained.
@@ -23,6 +26,8 @@ def get_local_ckpt(model_name):
     if not model_name.startswith('model_archive'):
         model_name = os.path.join('champion_models', model_name)
     model_name = os.path.join(data_base_path, model_name)
+    if model_dir:
+        return model_name
     if not '.' in model_name:
         candidates = glob.glob(os.path.join(model_name, "*.bin"))
         if len(candidates) == 0:
