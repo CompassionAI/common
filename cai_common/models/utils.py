@@ -3,7 +3,7 @@ import glob
 import json
 
 
-def get_local_ckpt(model_name, model_dir=False):
+def get_local_ckpt(model_name, model_dir=False, search_for_ext="bin"):
     """Convert the name of the model in the CAI data registry to a local checkpoint path.
 
     Args:
@@ -12,11 +12,12 @@ def get_local_ckpt(model_name, model_dir=False):
             within the data registry. Otherwise, it is assumed to be a champion model inside the champion_models
             directory.
 
-            If model name has no extension, and model_dir is False, it checks if there is only one .bin file in the path
-            the model name resolves to. If there is more than one, it crashes, otherwise it returns the path to this
-            .bin file.
-        model_dir (:obj:`bool`): Return the model directory, not a candidate bin file. Useful for Hugging Face local
-            loading using from_pretrained.
+            If model name has no extension, and model_dir is False, it checks if there is only one file with the
+            extension specified in search_for_ext in the path the model name resolves to. If there is more than one, it
+            crashes, otherwise it returns the path to the unique file with the requested extension.
+        model_dir (:obj:`bool`, `optional`): Return the model directory, not a candidate file. Useful for Hugging Face
+            local loading using from_pretrained.
+        search_for_ext (:obj:`string`, `optional`): What extension to search for. Defaults to 'bin'.
 
     Returns:
         The local directory name you can feed to AutoModel.from_pretrained.
@@ -29,12 +30,12 @@ def get_local_ckpt(model_name, model_dir=False):
     if model_dir:
         return model_name
     if not '.' in model_name:
-        candidates = glob.glob(os.path.join(model_name, "*.bin"))
+        candidates = glob.glob(os.path.join(model_name, "*." + search_for_ext))
         if len(candidates) == 0:
-            raise FileNotFoundError(f"No .bin files found in {model_name}")
+            raise FileNotFoundError(f"No .{search_for_ext} files found in {model_name}")
         if len(candidates) > 1:
-            raise FileExistsError(f"Multiple .bin files in {model_name}, please specify which one to load by appending"
-                                   "the .bin filename to the model name")
+            raise FileExistsError(f"Multiple .{search_for_ext} files in {model_name}, please specify which one to load "
+                                   "by appending the .{search_for_ext} filename to the model name")
         model_name = candidates[0]
     return model_name
 
@@ -50,7 +51,6 @@ def get_cai_config(model_name):
         The loaded CompassionAI config JSON.
     """
 
-    local_ckpt = get_local_ckpt(model_name)
-    cfg_fn = os.path.splitext(local_ckpt)[0] + ".config_cai.json"
+    cfg_fn = get_local_ckpt(model_name, search_for_ext="config_cai.json")
     with open(cfg_fn) as f:
         return json.load(f)
