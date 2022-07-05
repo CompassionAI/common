@@ -52,5 +52,7 @@ def get_cai_config(model_name):
     """
 
     cfg_fn = get_local_ckpt(model_name, search_for_ext="config_cai.json")
+    if not cfg_fn[-len(".config_cai.json"):] == ".config_cai.json":
+        cfg_fn = cfg_fn.split('.')[0] + ".config_cai.json"      # Deliberately take the first dot
     with open(cfg_fn) as f:
         return json.load(f)
