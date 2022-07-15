@@ -250,6 +250,7 @@ class KangyurLoader(OldKangyurLoader):
         base_folio_number: The number of the first page in every volume. Defaults to 3, which is what is currently
             in the OpenPecha dataset. Used to rebase the pagination so that every volume starts from page 1, just like
             in the eKangyur pagination used by 84,000.
+        recto_verso_pagination: Reproduce the F.x.(a|b) pagination format. Defaults to False.
     """
 
     _df_column_names = ["filename", "volume_number", "location", "text"]
@@ -259,6 +260,7 @@ class KangyurLoader(OldKangyurLoader):
     _remove_uuids = True
     data_glob = "raw_datasets/OpenPecha-kangyur/*.txt"
     base_folio_number = 3
+    recto_verso_pagination = False
 
     def __init__(self,
                  glob_prefix=None,
@@ -297,10 +299,13 @@ class KangyurLoader(OldKangyurLoader):
         # Currently unpaginated. This is because the pagination in the OpenPecha repo doesn't have the recto/verso
         #   tags preserved, and is instead matched to the names of the image files.
         page = int(match[0].split('-')[1])
-        folio_num = (page - 1) // 2 - self.base_folio_number + 1
-        recto_verso = 'a' if (page % 2) == 1 else 'b'
-        return f"F.{folio_num}.{recto_verso}"
-
+        if self.recto_verso_pagination:
+            folio_num = (page - self.base_folio_number) // 2 + 1
+            recto_verso = 'a' if (page % 2) == 1 else 'b'
+            return f"F.{folio_num}.{recto_verso}"
+        else:
+            return str(page - self.base_folio_number)
+ 
     def _get_volume_num_from_fn(self, fn):
         return int(fn.split("_")[0][1:])
 
