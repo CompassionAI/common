@@ -251,7 +251,7 @@ class KangyurLoader(OldKangyurLoader):
 
     _df_column_names = ["filename", "volume_number", "location", "text"]
     _df_meta = [['a'], ['a'], ['a'], ['a']]
-    _folio_marker_re = re.compile("\n\n")
+    _folio_marker_re = re.compile(" i-\d+")
     _uuid_re = re.compile("OpenPechaUUID:[\w{6,6}]")
     _remove_uuids = True
     data_glob = "raw_datasets/OpenPecha-kangyur/*.txt"
@@ -292,7 +292,10 @@ class KangyurLoader(OldKangyurLoader):
     def _format_folio_locator(self, match):
         # Currently unpaginated. This is because the pagination in the OpenPecha repo doesn't have the recto/verso
         #   tags preserved, and is instead matched to the names of the image files.
-        return ""
+        page = int(match[0].split('-')[1])
+        folio_num = (page - 1) // 2
+        recto_verso = 'a' if (page % 2) == 1 else 'b'
+        return f"F.{folio_num}.{recto_verso}"
 
     def _get_volume_num_from_fn(self, fn):
         return int(fn.split("_")[0][1:])
