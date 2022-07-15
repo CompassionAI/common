@@ -1,8 +1,11 @@
+import logging
+
 import re
 from bs4.element import Comment, NavigableString, Tag, XMLProcessingInstruction
 from bs4 import BeautifulSoup, SoupStrainer
 from .corpus_loader import CorpusLoader
 
+logger = logging.getLogger(__name__)
 
 def _treat_tags(soup, tag_treatments):
     # Apply the tag_treatments dictionary to the XML soup. Return the soup so that it can be fed to other functions.
@@ -19,7 +22,9 @@ def _treat_divs_and_refs(soup, toh_key, num_toh_keys, refs_to_strip):
     # Decompose refs that are not pointing to the passed in Tohoku number and unwrap divs in the XML soup. Return the
     #   soup so that it can be fed to other functions.
     for ref in soup.find_all("ref"):
-        if ref.attrs.get('type', None) in refs_to_strip:
+        if not "xml:id" in ref.attrs:
+            ref.decompose()
+        elif ref.attrs.get('type', None) in refs_to_strip:
             ref.decompose()
         else:
             if ('key' not in ref.attrs and num_toh_keys > 1) and not set(ref.attrs.keys()) == {'target'}:
@@ -32,12 +37,18 @@ def _treat_divs_and_refs(soup, toh_key, num_toh_keys, refs_to_strip):
     return soup
 
 
-def _segment_folios(soup, toh_key):
+def _folio_str_to_page_num(folio_str):
+    # Converts F.a.b to a (relative) page number
+    splits = folio_str.split('.')
+    return 2 * int(splits[1]) + (1 if splits[2] == 'b' else 0)
+
+
+def _segment_folios(soup, toh_key, volumes):
     # Iterate through the processed XML soup in parsing order and segment it into folios using the remaining ref tags.
     #   Return the segmentation.
     valid_tag_types = {'folio', 'volume'}
     space_re = re.compile(r"\s+")
-    segmentation, cur_volume, cur_ref, cur_text = [], None, None, ''
+    segmentation, cur_volume, vol_start_page, cur_ref, cur_text = [], None, None, None, ''
     for elem in soup.next_elements:
         if type(elem) is NavigableString:
             cur_text += space_re.sub(' ', elem.string)
@@ -48,13 +59,29 @@ def _segment_folios(soup, toh_key):
                     elem.name, elem.attrs.get('type', 'none'), toh_key))
             segmentation.append((cur_volume, cur_ref, cur_text))
             if elem_type == 'folio':
-                cur_text, cur_ref = '', elem['cRef']
+                ref_page = _folio_str_to_page_num(elem['cRef'])
+                if vol_start_page is None:
+                    vol_start_page = ref_page
+                if cur_volume is None:
+                    if len(volumes) > 1:
+                        raise ValueError(f"In {toh_key}, no volume specified in start of doc but more than one volume "
+                                          "in metadata.")
+                    cur_volume = next(iter(volumes.keys()))
+                if not cur_volume in volumes:
+                    raise ValueError(f"In {toh_key}, the current volume was {cur_volume} but is not in the volume "
+                                     f"metadata ({sorted(list(volumes.keys()))})")
+                cur_text, cur_ref = '', ref_page - vol_start_page + volumes[cur_volume]['start_page'] - 1
+                if cur_ref > volumes[cur_volume]['end_page']:
+                    logger.warning(f"In {toh_key}, the current page was {cur_ref} which is larger than the end page "
+                                   f"{volumes[cur_volume]['end_page']} for volume {cur_volume}, "
+                                   f"xml:id={elem['xml:id']}")
             elif elem_type == 'volume':
                 cur_volume = elem['cRef']
                 if not (cur_volume[0] == 'V' and cur_volume[1:].isdigit()):
                     raise ValueError(f"Badly formatted volume number {cur_volume} in tag name {elem.name}, type "
                                      f"{elem.attrs.get('type', 'none')}, tohoku number {toh_key}")
                 cur_volume = int(cur_volume[1:])
+                vol_start_page = None
         elif type(elem) is Comment:
             pass
         elif type(elem) is XMLProcessingInstruction:
@@ -71,34 +98,53 @@ def _process_fstr(args):
     #
     #   filename, Tohoku number, number of Tohoku numbers in filename, contents of the filename as a string,
     #   a dictionary of tag treatments, a list of ref tag types to strip
-    text_name, toh_key, num_toh_keys, fstr, tag_treatments, refs_to_strip = args
+    text_name, toh_key, num_toh_keys, volumes, fstr, tag_treatments, refs_to_strip = args
     soup = BeautifulSoup(
         fstr,
         'xml',
         parse_only=SoupStrainer("div", type="translation"))
     return [
         (text_name, toh_key, volume, ref, text)
-        for volume, ref, text in _segment_folios(
-            _treat_divs_and_refs(
-                _treat_tags(soup, tag_treatments), toh_key, num_toh_keys, refs_to_strip), toh_key)]
+        for volume, ref, text in 
+            _segment_folios(
+                _treat_divs_and_refs(
+                    _treat_tags(
+                        soup,
+                        tag_treatments
+                    ),
+                    toh_key,
+                    num_toh_keys,
+                    refs_to_strip
+                ),
+                toh_key,
+                volumes
+            )
+        ]
 
 
 def _fn_to_tohs(args):
-    # Extract the list of Tohoku numbers from the filename. For example:
-    #
-    #   "072-012_toh312,628,1093-the_mahasutra_entering_the_city_of_vaisali.xml" => ["toh312", "toh628", "toh1093"]
+    # Extract the list of Tohoku numbers from the metadata sourceDesc tag
     #
     # Args has to be a tuple of (filename, contents of the filename as a string). The function returns a list of
-    #   tuples, one tuple per Tohoku number in the filename, of the form:
+    #   tuples, one tuple per Tohoku number in the text, of the form:
     #
-    #   [(filename, Tohoku number, number of Tohoku numbers in filename, contents of the filename as a string)]
+    #   [(filename, Tohoku number, count of Tohoku numbers in text, contents of the filename as a string)]
     fn, fstr = args
-    toh_re_res = re.compile(r"_toh[\d,]+[-_]").search(fn)
-    if toh_re_res:
-        toh_keys = ['toh' + toh_num for toh_num in toh_re_res.group(0)[4:-1].split(',')]
-        return [(fn, toh_key, len(toh_keys), fstr) for toh_key in toh_keys]
-    else:
-        return []
+    soup = BeautifulSoup(
+        fstr,
+        'xml',
+        parse_only=SoupStrainer("sourceDesc")
+    )
+    toh_metadata = []
+    for source in soup.find_all("bibl"):
+        volumes = {}
+        for volume in source.find_all("volume"):
+            volumes[int(volume['number'])] = {
+                "start_page": int(volume['start-page']),
+                "end_page": int(volume['end-page'])
+            }
+        toh_metadata.append((source['key'], volumes))
+    return [(fn, toh_key, len(toh_metadata), volumes, fstr) for toh_key, volumes in toh_metadata]
 
 
 class TeiLoader(CorpusLoader):
