@@ -247,6 +247,9 @@ class KangyurLoader(OldKangyurLoader):
     Attributes:
         data_glob: A glob for the location of the data after the prefix that locates the repo. The prefix is specified
             in the constructor. Defaults to: raw_datasets/OpenPecha-kangyur/*.txt
+        base_folio_number: The number of the first page in every volume. Defaults to 3, which is what is currently
+            in the OpenPecha dataset. Used to rebase the pagination so that every volume starts from page 1, just like
+            in the eKangyur pagination used by 84,000.
     """
 
     _df_column_names = ["filename", "volume_number", "location", "text"]
@@ -255,6 +258,7 @@ class KangyurLoader(OldKangyurLoader):
     _uuid_re = re.compile("OpenPechaUUID:[\w{6,6}]")
     _remove_uuids = True
     data_glob = "raw_datasets/OpenPecha-kangyur/*.txt"
+    base_folio_number = 3
 
     def __init__(self,
                  glob_prefix=None,
@@ -293,7 +297,7 @@ class KangyurLoader(OldKangyurLoader):
         # Currently unpaginated. This is because the pagination in the OpenPecha repo doesn't have the recto/verso
         #   tags preserved, and is instead matched to the names of the image files.
         page = int(match[0].split('-')[1])
-        folio_num = (page - 1) // 2
+        folio_num = (page - 1) // 2 - self.base_folio_number + 1
         recto_verso = 'a' if (page % 2) == 1 else 'b'
         return f"F.{folio_num}.{recto_verso}"
 
