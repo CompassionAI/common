@@ -28,8 +28,8 @@ def _treat_divs_and_refs(soup, toh_key, num_toh_keys, refs_to_strip):
             ref.decompose()
         else:
             if ('key' not in ref.attrs and num_toh_keys > 1) and not set(ref.attrs.keys()) == {'target'}:
-                raise Exception("No 'key' attribute in ref tag {}, but more than one Tohoku number for the text {}"
-                                .format(ref, toh_key))
+                raise Exception(f"No 'key' attribute in ref tag {ref}, but more than one Tohoku number for the text "
+                                f"{toh_key}")
             if not ('key' not in ref.attrs or ref.attrs.get('key', None) == toh_key) or 'cRef' not in ref.attrs:
                 ref.decompose()
     for div in soup.find_all("div"):
@@ -50,13 +50,13 @@ def _segment_folios(soup, toh_key, volumes):
     space_re = re.compile(r"\s+")
     segmentation, cur_volume, vol_start_page, cur_ref, cur_text = [], None, None, None, ''
     for elem in soup.next_elements:
-        if type(elem) is NavigableString:
+        if isinstance(elem, NavigableString):
             cur_text += space_re.sub(' ', elem.string)
-        elif type(elem) is Tag:
+        elif isinstance(elem, Tag):
             elem_type = elem.attrs.get('type', 'folio')
             if not (elem.name == 'ref' and elem_type in valid_tag_types):
-                raise ValueError("Bad tag: name {}, type {}, tohoku number {}".format(
-                    elem.name, elem.attrs.get('type', 'none'), toh_key))
+                raise ValueError(f"Bad tag: name {elem.name}, type {elem.attrs.get('type', 'none')}, tohoku number "
+                                 f"{toh_key}")
             segmentation.append((cur_volume, cur_ref, cur_text))
             if elem_type == 'folio':
                 ref_page = _folio_str_to_page_num(elem['cRef'])
@@ -82,12 +82,12 @@ def _segment_folios(soup, toh_key, volumes):
                                      f"{elem.attrs.get('type', 'none')}, tohoku number {toh_key}")
                 cur_volume = int(cur_volume[1:])
                 vol_start_page = None
-        elif type(elem) is Comment:
+        elif isinstance(elem, Comment):
             pass
-        elif type(elem) is XMLProcessingInstruction:
+        elif isinstance(elem, XMLProcessingInstruction):
             pass
         else:
-            raise ValueError("Bad tag {}".format(elem))
+            raise ValueError(f"Bad tag {elem}")
     segmentation.append((cur_volume, cur_ref, cur_text))
     return segmentation
 
@@ -105,7 +105,7 @@ def _process_fstr(args):
         parse_only=SoupStrainer("div", type="translation"))
     return [
         (text_name, toh_key, volume, ref, text)
-        for volume, ref, text in 
+        for volume, ref, text in
             _segment_folios(
                 _treat_divs_and_refs(
                     _treat_tags(
