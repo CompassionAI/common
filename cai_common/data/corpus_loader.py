@@ -19,7 +19,7 @@ def _split_sentences(folio):
     # Split a folio into sentences along regular punctuation. Only works for English.
     return [sent.strip()
             for sent in re
-                .sub("[{}]".format(_english_punctuation), lambda match: match.group() + '\u2406', folio)
+                .sub(f"[{_english_punctuation}]", lambda match: match.group() + '\u2406', folio)
                 .split("\u2406")]
 
 
