@@ -158,7 +158,10 @@ disable=raw-checker-failed,
         invalid-name,
         logging-fstring-interpolation,
         logging-not-lazy,
-        import-outside-toplevel
+        import-outside-toplevel,
+        too-many-statements,
+        too-many-branches,
+        too-many-locals
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
