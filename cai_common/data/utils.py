@@ -6,7 +6,7 @@ def repl_split_commas_or_kill(match, take_second_item=False, test_mode=False):
     if ',' in match:
         if take_second_item:
             if test_mode:
-                return "@{}|{}@".format(match, match.split(',')[1][:-1])
+                return f"@{match}|{match.split(',')[1][:-1]}@"
             else:
                 return match.split(',')[1][:-1]
         return match.split(',')[0][1:]
@@ -14,7 +14,7 @@ def repl_split_commas_or_kill(match, take_second_item=False, test_mode=False):
     if '‚' in match:
         if take_second_item:
             if test_mode:
-                return "@{}|{}@".format(match, match.split('‚')[1][:-1])
+                return f"@{match}|{match.split('‚')[1][:-1]}@"
             else:
                 return match.split('‚')[1][:-1]
         return match.split('‚')[0][1:]
