@@ -163,6 +163,7 @@ disable=raw-checker-failed,
         too-many-branches,
         too-many-locals,
         too-many-arguments,
+        too-few-public-methods,
         unspecified-encoding,
         unnecessary-lambda-assignment
 
