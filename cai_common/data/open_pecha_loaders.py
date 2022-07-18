@@ -1,7 +1,7 @@
 import re
-from .corpus_loader import CorpusLoader
 from cai_common.dict import tibetan_digits, translate_tibetan_number
 
+from .corpus_loader import CorpusLoader
 from .utils import repl_split_commas_or_kill
 
 
@@ -24,6 +24,7 @@ class OpenPechaLoader(CorpusLoader):
     """
 
     _space_re = re.compile(r"\s+")
+    _folio_marker_re = None
     _apply_markup = True
     _replace_with_suggested = False
     _clean_bad_chars = True
@@ -123,6 +124,8 @@ class OpenPechaLoader(CorpusLoader):
         fn, volume_str = args
         volume_num = self._get_volume_num_from_fn(fn)
         res, cur_ref, last_loc = [], None, None
+        if self._folio_marker_re is None:
+            raise NotImplementedError()
         for match in self._folio_marker_re.finditer(volume_str):
             cur_loc_start, cur_loc_end = match.span()
             if last_loc is not None:
@@ -161,7 +164,7 @@ class OldKangyurLoader(OpenPechaLoader):
 
     _df_column_names = ["filename", "volume_number", "location", "text"]
     _df_meta = [['a'], ['a'], ['a'], ['a']]
-    _folio_marker_re = re.compile(r"\(([{}]+)([ནབ])་\)".format(''.join(tibetan_digits)))
+    _folio_marker_re = re.compile(rf"\(([{''.join(tibetan_digits)}]+)([ནབ])་\)")
     data_glob = "raw_datasets/OpenPecha-kangyur-old/*.txt"
 
     def __init__(self,
@@ -190,9 +193,9 @@ class OldKangyurLoader(OpenPechaLoader):
     def _format_folio_locator(self, match):
         # Format the result of the folio marker regular expression (self._folio_marker_re) to be in the standard 84,000
         #   form F.page.a(verso)/b(recto).
-        return "F.{}.{}".format(translate_tibetan_number(match.group(1)), 'a' if match.group(2) == 'ན' else 'b')
+        return f"F.{translate_tibetan_number(match.group(1))}.{'a' if match.group(2) == 'ན' else 'b'}"
 
-    def _preprocess_bag(self, bag, locators):
+    def _preprocess_bag(self, bag, _locators):
         # Child classes can inherit this to do their own processing before this class mangles the text
         return bag
 
@@ -233,7 +236,7 @@ class OldKangyurLoader(OpenPechaLoader):
             bad_chars_to_remove = "*`p}1-9\ufeff�‘’"
             bag = bag.map(lambda args: _apply_with_locators(
                 args,
-                lambda x: re.sub(r"[\[\]{}]".format(bad_chars_to_remove), '', x),
+                lambda x: re.sub(rf"[\[\]{bad_chars_to_remove}]", '', x),
                 locators))
         return bag
 
@@ -255,8 +258,8 @@ class KangyurLoader(OldKangyurLoader):
 
     _df_column_names = ["filename", "volume_number", "location", "text"]
     _df_meta = [['a'], ['a'], ['a'], ['a']]
-    _folio_marker_re = re.compile(" i-\d+")
-    _uuid_re = re.compile("OpenPechaUUID:[\w{6,6}]")
+    _folio_marker_re = re.compile(r" i-\d+")
+    _uuid_re = re.compile(r"OpenPechaUUID:[\w{6,6}]")
     _remove_uuids = True
     data_glob = "raw_datasets/OpenPecha-kangyur/*.txt"
     base_folio_number = 3
@@ -305,7 +308,7 @@ class KangyurLoader(OldKangyurLoader):
             return f"F.{folio_num}.{recto_verso}"
         else:
             return str(page - self.base_folio_number)
- 
+
     def _get_volume_num_from_fn(self, fn):
         return int(fn.split("_")[0][1:])
 
@@ -357,7 +360,7 @@ class TengyurLoader(OpenPechaLoader):
     def _format_folio_locator(self, match):
         # Format the result of the folio marker regular expression (self._folio_marker_re) to be in the standard 84,000
         #   form F.page.a(verso)/b(recto).
-        return "F.{}.{}".format(match.group(1), match.group(2))
+        return f"F.{match.group(1)}.{match.group(2)}"
 
     def _process_bag(self, bag, locators):
         # Prepares a bag, with or without locators as indicated. Applies folio segmentation, removes spaces, and
@@ -401,6 +404,6 @@ class TengyurLoader(OpenPechaLoader):
             bad_chars_to_remove = "\ufeff\x07\t+./0-9:;<=>A-Za-z{×"
             bag = bag.map(lambda args: _apply_with_locators(
                 args,
-                lambda x: re.sub(r"[\[\]#\(\),*{}]".format(bad_chars_to_remove), '', x),
+                lambda x: re.sub(fr"[\[\]#\(\),*{bad_chars_to_remove}]", '', x),
                 locators))
         return bag
