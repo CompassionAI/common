@@ -59,7 +59,7 @@ class TokenTagDataset(TorchDataset):
                  tokenizer,
                  processed_dataset,
                  verbose=False,
-                 tqdm=tqdm,
+                 tqdm=tqdm,      # pylint: disable=redefined-outer-name
                  examples=None,
                  label_to_id_map=None):
         """Initialize the dataset. This constructor will prepare examples for training with the parameters specified in
@@ -69,7 +69,8 @@ class TokenTagDataset(TorchDataset):
             tokenizer (PreTrainedTokenizer): The tokenizer to use for getting the token ids for the various special
                 tokens like [CLS], [SEP] and <pad>.
             processed_dataset: Name of the preprocessed dataset with a pickle file with tsheg-pretokenized tokens and
-                labels. Will translate to the file $CAI_DATA_BASE_PATH/processed_datasets/{processed_dataset}/dataset.pkl.
+                labels. Will translate to the file
+                $CAI_DATA_BASE_PATH/processed_datasets/{processed_dataset}/dataset.pkl.
             verbose (bool): If True will print a progress bar using TQDM. Defaults to False.
             tqdm (TQDM module, optional): Pass in the TQDM module to use for the progress bar. Useful when running in a
                 notebook. Defaults to the tqdm you get when using "from tqdm.auto import tqdm".
@@ -97,7 +98,7 @@ class TokenTagDataset(TorchDataset):
         with FileLock(lock_path):
             with open(self.processed_dataset, 'rb') as f:
                 self.tokenized_data = pickle.load(f)
-        concatted_data = type(self.tokenized_data[0][1]) is list
+        concatted_data = isinstance(self.tokenized_data[0][1], list)
 
         if concatted_data:
             unique_labels = sorted(list(set([label for example in self.tokenized_data for label in example[1]])))
