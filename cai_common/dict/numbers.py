@@ -34,6 +34,6 @@ def translate_tibetan_number(tibetan_number):
     for digit in tibetan_number:
         try:
             res += str(tibetan_digits.index(digit))
-        except ValueError:
-            raise ValueError("Supposed to be Tibetan number consisting of whole digits but contains {}.".format(digit))
+        except ValueError as e:
+            raise ValueError(f"Supposed to be Tibetan number consisting of whole digits but contains {digit}.") from e
     return int(res)

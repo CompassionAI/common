@@ -1,7 +1,8 @@
 import os
+from enum import Enum
+
 import pyewts
 import dask.bag as db
-from enum import Enum
 from cai_common.utils import open_globs
 
 
@@ -11,7 +12,7 @@ class TibetanEncoding(Enum):
     EWTS = 2
 
 
-class TibetanDict(object):
+class TibetanDict:
     """Dictionary object to translate individual words from Tibetan into English. Supports Extended Wylie and Unicode
     Tibetan encodings.
 
@@ -89,7 +90,7 @@ class TibetanDict(object):
         Returns:
             List of all dictionary translations for the Tibetan word, or a list of lists if multiple words were
             provided, or None if the word is not found."""
-        if type(tibetan) is list:
+        if isinstance(tibetan, list):
             return [self[tw] for tw in tibetan]
         if tibetan[-1] == '་':
             tibetan = tibetan[:-1]
