@@ -1,5 +1,4 @@
 from dataclasses import dataclass, fields
-from mimetypes import init
 from transformers import TrainingArguments, Seq2SeqTrainingArguments
 from transformers.trainer_utils import IntervalStrategy, SchedulerType, HubStrategy
 from transformers.training_args import OptimizerNames
@@ -22,7 +21,7 @@ class HydraToHFConverterMixIn:
             for field in fields(cls._hf_base_class)
             if field.init
         }
-        return cls._hf_base_class(**dict(filtered_cfg))
+        return cls._hf_base_class(**dict(filtered_cfg))     # pylint: disable=not-callable
 
 
 @dataclass

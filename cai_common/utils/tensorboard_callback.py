@@ -7,7 +7,7 @@ logger = logging.get_logger(__name__)
 
 class CAITensorboardCallback(TensorBoardCallback):
     """Our own Tensorboard callback that supports additional features:
-    
+
     - Currently just outputting text as well as scalars on log
     """
 
