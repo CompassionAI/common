@@ -7,7 +7,8 @@ from .utils import repl_split_commas_or_kill
 
 _strip_chars = {'!'}
 _bad_chars = {
-    '_', 'a', 'b', 'c', 'd', 'e', 'f', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'y', '\u200b'}
+    '_', 'a', 'b', 'c', 'd', 'e', 'f', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'y',
+    '\u200b'}
 
 
 def _strip_out_pairs(soup, strip_chars, bad_chars, apply_markup, replace_with_suggested):
@@ -37,7 +38,7 @@ def _strip_out_pairs(soup, strip_chars, bad_chars, apply_markup, replace_with_su
     return pairs
 
 
-def _process(args,
+def _process(args,            # pylint: disable=dangerous-default-value
              with_locator=True,
              strip_chars=_strip_chars,
              bad_chars=_bad_chars,
