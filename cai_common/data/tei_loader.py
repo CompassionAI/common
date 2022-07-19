@@ -147,6 +147,13 @@ def _fn_to_tohs(args):
     return [(fn, toh_key, len(toh_metadata), volumes, fstr) for toh_key, volumes in toh_metadata]
 
 
+def _recto_verso_paginate(args):
+    text_name, toh_key, volume, ref, text = args
+    p = 0 if ref is None else int(ref)
+    ref = f"F.{(p - 1) // 2 + 1}.{'a' if (p % 2) == 0 else 'b'}"
+    return (text_name, toh_key, volume, ref, text)
+
+
 class TeiLoader(CorpusLoader):
     """Corpus loader for the 84,000 TEI translation files. Source repo is https://github.com/84000/all-data.
 
@@ -170,6 +177,7 @@ class TeiLoader(CorpusLoader):
     _df_column_names = ["filename", "tohoku_number", "volume_number", "location", "text"]
     _df_meta = [['a'], ['a'], ['a'], ['a'], ['a']]
     _df_final_columns = ["filename", "tohoku_number", "volume_number", "location", "text"]
+    _recto_verso_pagination = False
 
     data_glob = "raw_datasets/84000-translations-tei/translations/{corpus}/translations/*.xml"
     glob_exclusions = {
@@ -276,6 +284,19 @@ class TeiLoader(CorpusLoader):
             glob_prefix=glob_prefix,
             glob_override=glob_override)
 
+    def recto_verso_pagination(self, recto_verso=True):
+        """Set the pagination to F.[page].[a=recto/b=version] style.
+
+        Args:
+            recto_verso: Use recto-verso pagination if True. Defaults to True.
+
+        Returns:
+            The corpus loader object so that methods can be chained in the functional style.
+        """
+
+        self._recto_verso_pagination = recto_verso
+        return self
+
     def _process_bag(self, bag, locators):
         # Prepares a bag, with or without locators as indicated. Adds the Tohoku numbers, applies folio segmentation,
         #   strips markup, removes spaces, and removes locators if requested.
@@ -285,6 +306,9 @@ class TeiLoader(CorpusLoader):
             .map(lambda args: tuple(list(args) + [self.tag_treatments, self.ref_types_to_strip])) \
             .map(_process_fstr) \
             .flatten()
+        if self._recto_verso_pagination:
+            bag = bag \
+                .map(_recto_verso_paginate)
         if not locators:
             bag = bag.map(lambda args: args[-1])
         return bag
