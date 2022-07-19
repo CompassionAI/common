@@ -48,7 +48,10 @@ def _process(args,            # pylint: disable=dangerous-default-value
     soup = BeautifulSoup(fstr, 'xml')
     cur_pairs = _strip_out_pairs(soup, strip_chars, bad_chars, apply_markup, replace_with_suggested)
     if with_locator:
-        toh = fn.split('-')[0].split('_')[1]
+        toh = re.findall(r"Toh_[\d-]+[a-z]?-", fn)
+        if len(toh) == 0:
+            raise ValueError(f"Filename has no Tohoku number: {fn}")
+        toh = toh[0][4:-1]
         return [(fn, toh, folio, position, tibetan, english) for folio, position, tibetan, english in cur_pairs]
     else:
         return [(tibetan, english) for _, _, tibetan, english in cur_pairs]
@@ -73,6 +76,9 @@ class ParallelTMXLoader(CorpusLoader):
     _clean_bad_chars = True
 
     data_glob = "raw_datasets/84000-parallel-sentences/*.tmx"
+    glob_exclusions = {
+        "Modular_Passages-TM-Test.tmx"
+    }
     strip_chars = _strip_chars
     bad_chars = _bad_chars
 
