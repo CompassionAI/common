@@ -166,7 +166,8 @@ disable=raw-checker-failed,
         too-few-public-methods,
         unspecified-encoding,
         unnecessary-lambda-assignment,
-        no-else-return
+        no-else-return,
+        consider-using-dict-items
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
