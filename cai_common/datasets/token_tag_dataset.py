@@ -109,7 +109,10 @@ class TokenTagDataset(TorchDataset):
             unique_labels = sorted(list({label for example in self.tokenized_data for label in example[1]}))
         else:
             unique_labels = sorted(list({example[1] for example in self.tokenized_data}))
-        self.mask_token_id = len(unique_labels) + 1
+        if '[MASK]' in unique_labels:
+            self.mask_token_id = unique_labels.index('[MASK]')
+        else:
+            self.mask_token_id = len(unique_labels) + 1
         if label_to_id_map is None:
             self.label_to_id_map = {label: idx for idx, label in enumerate(unique_labels)}
             self.label_to_id_map['<pad>'] = TokenTagDataset._pad_token_label_id
