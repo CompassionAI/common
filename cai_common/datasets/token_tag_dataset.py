@@ -86,7 +86,11 @@ class TokenTagDataset(TorchDataset):
         """
 
         super().__init__()
-        self.processed_dataset = os.path.join(DATA_BASE_PATH, f"processed_datasets/{processed_dataset}/dataset.pkl")
+        if processed_dataset.endswith(".pkl"):
+            self.processed_dataset = os.path.join(DATA_BASE_PATH, f"processed_datasets/{processed_dataset}")
+        else:
+            self.processed_dataset = os.path.join(
+                DATA_BASE_PATH, f"processed_datasets/{processed_dataset}/dataset.pkl")
         self.tokenizer = tokenizer
 
         if examples is not None:
