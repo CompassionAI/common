@@ -168,6 +168,7 @@ disable=raw-checker-failed,
         unspecified-encoding,
         unnecessary-lambda-assignment,
         no-else-return,
+        no-else-raise,
         consider-using-dict-items
 
 # Enable the message, report, category or checker with the given id(s). You can
