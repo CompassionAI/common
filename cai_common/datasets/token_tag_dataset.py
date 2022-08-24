@@ -31,7 +31,7 @@ class TokenTagDataset(TorchDataset):
 
     Args:
         processed_dataset: Name of the preprocessed dataset with a pickle file with tsheg-pretokenized tokens and
-            labels. Will translate to the file $CAI_DATA_BASE_PATH/processed_datasets/{processed_dataset}/dataset.pkl.
+            labels. Will translate to the file $CAI_DATA_BASE_PATH/{processed_dataset}/dataset.pkl.
         concatenate_examples (bool): Concatenate examples to form long sentences. Defaults to False.
         use_mask_for_word_pieces (bool): When set to False, the first piece of a word in the dataset is marked with its
             label and the rest of the pieces of that word are marked with the padding token, which is set to the
@@ -74,7 +74,7 @@ class TokenTagDataset(TorchDataset):
                 tokens like [CLS], [SEP] and <pad>.
             processed_dataset: Name of the preprocessed dataset with a pickle file with tsheg-pretokenized tokens and
                 labels. Will translate to the file
-                $CAI_DATA_BASE_PATH/processed_datasets/{processed_dataset}/dataset.pkl.
+                $CAI_DATA_BASE_PATH/{processed_dataset}/dataset.pkl.
             verbose (bool): If True will print a progress bar using TQDM. Defaults to False.
             tqdm (TQDM module, optional): Pass in the TQDM module to use for the progress bar. Useful when running in a
                 notebook. Defaults to the tqdm you get when using "from tqdm.auto import tqdm".
@@ -87,10 +87,9 @@ class TokenTagDataset(TorchDataset):
 
         super().__init__()
         if processed_dataset.endswith(".pkl"):
-            self.processed_dataset = os.path.join(DATA_BASE_PATH, f"processed_datasets/{processed_dataset}")
+            self.processed_dataset = os.path.join(DATA_BASE_PATH, f"{processed_dataset}")
         else:
-            self.processed_dataset = os.path.join(
-                DATA_BASE_PATH, f"processed_datasets/{processed_dataset}/dataset.pkl")
+            self.processed_dataset = os.path.join(DATA_BASE_PATH, f"{processed_dataset}/dataset.pkl")
         self.tokenizer = tokenizer
 
         if examples is not None:
