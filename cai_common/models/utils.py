@@ -24,7 +24,7 @@ def get_local_ckpt(model_name, model_dir=False, search_for_ext="bin"):
     """
 
     data_base_path = os.environ['CAI_DATA_BASE_PATH']
-    if not model_name.startswith('model_archive'):
+    if not '/' in model_name:
         model_name = os.path.join('champion_models', model_name)
     model_name = os.path.join(data_base_path, model_name)
     if model_dir:
