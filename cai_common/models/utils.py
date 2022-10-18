@@ -2,10 +2,23 @@ import os
 import glob
 import json
 import yaml
+import logging
 
+from urllib.error import HTTPError
 from tqdm.auto import tqdm
 from torch.hub import download_url_to_file, get_dir
 from cai_common.defaults import cai_s3
+
+
+logger = logging.getLogger(__name__)
+
+
+def _download_file(s3_loc, target_fn):
+    try:
+        download_url_to_file(s3_loc, target_fn)
+    except HTTPError as e:
+        logger.error(f"Failed to download {s3_loc} to {target_fn}")
+        raise e
 
 
 def get_local_model_dir(model_name):
@@ -44,7 +57,7 @@ def get_local_model_dir(model_name):
         
         manifest_fn = os.path.join(model_dir, "manifest.yaml")
         if not os.path.exists(manifest_fn):
-            download_url_to_file(f"{s3_model_loc}/manifest.yaml", manifest_fn)
+            _download_file(f"{s3_model_loc}/manifest.yaml", manifest_fn)
         with open(manifest_fn, 'r') as manifest_f:
             manifest = yaml.safe_load(manifest_f)
 
@@ -53,8 +66,8 @@ def get_local_model_dir(model_name):
                 if not os.path.exists(f_loc)
         ]
         if len(to_download) > 0:
-            for model_file in tqdm(to_download, desc="Model file download"):
-                download_url_to_file(f"{s3_model_loc}/{model_file}", os.path.join(model_dir, model_file))
+            for model_file in tqdm(to_download, desc="Downloading model files"):
+                _download_file(f"{s3_model_loc}/{model_file}", os.path.join(model_dir, model_file))
 
     return model_dir
 
