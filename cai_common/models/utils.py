@@ -9,7 +9,7 @@ from torch.hub import download_url_to_file, get_dir
 from cai_common.defaults import cai_s3
 
 
-def load_from_s3(model_name, s3_model_loc):
+def get_local_model_dir(model_name):
     """Load the model from the CAI S3 data registry into the Torch Hub temporary directory.
     
     Args:
@@ -17,28 +17,45 @@ def load_from_s3(model_name, s3_model_loc):
             The model name in the CAI data registry. If it starts with 'model_archive', it is assumed to be a path
             within the data registry. Otherwise, it is assumed to be a champion model inside the champion_models
             directory.
-        s3_model_loc (:obj:`string`): The HTTPS URI of the directory in S3 that contains the model files. Must contain
-            a manifest YAML file.
 
     Returns:
         The local directory name you can feed to AutoModel.from_pretrained.
     """
-    model_dir = os.path.join(get_dir(), model_name)
-    os.makedirs(model_dir, exist_ok=True)
-    
-    manifest_fn = os.path.join(model_dir, "manifest.yaml")
-    if not os.path.exists(manifest_fn):
-        download_url_to_file(f"{s3_model_loc}/manifest.yaml", manifest_fn)
-    with open(manifest_fn, 'r') as manifest_f:
-        manifest = yaml.safe_load(manifest_f)
+    if model_name.startswith("https://"):
+        s3_model_loc = model_name
+        model_name = model_name[len(cai_s3):]
+        model_dir = os.path.join(get_dir(), model_name)
+    elif os.path.exists(model_name):
+        model_dir = model_name
+        s3_model_loc = None
+    else:
+        data_base_path = os.environ.get('CAI_DATA_BASE_PATH', cai_s3)
+        if data_base_path.startswith("https://"):
+            model_dir = os.path.join(get_dir(), model_name)
+            s3_model_loc = os.path.join(data_base_path, model_name)
+        else:
+            model_dir = os.path.join(data_base_path, model_name)
+            s3_model_loc = None
 
-    to_download = [
-        fn for fn, f_loc in [(fn, os.path.join(model_dir, fn)) for fn in manifest['inference']]
-            if not os.path.exists(f_loc)
-    ]
-    if len(to_download) > 0:
-        for model_file in tqdm(to_download, desc="Model file download"):
-            download_url_to_file(f"{s3_model_loc}/{model_file}", os.path.join(model_dir, model_file))
+    if s3_model_loc is not None:
+        if not s3_model_loc.startswith(cai_s3):
+            raise ValueError("Only downloads from the public CAI data registry are allowed")
+
+        os.makedirs(model_dir, exist_ok=True)
+        
+        manifest_fn = os.path.join(model_dir, "manifest.yaml")
+        if not os.path.exists(manifest_fn):
+            download_url_to_file(f"{s3_model_loc}/manifest.yaml", manifest_fn)
+        with open(manifest_fn, 'r') as manifest_f:
+            manifest = yaml.safe_load(manifest_f)
+
+        to_download = [
+            fn for fn, f_loc in [(fn, os.path.join(model_dir, fn)) for fn in manifest['inference']]
+                if not os.path.exists(f_loc)
+        ]
+        if len(to_download) > 0:
+            for model_file in tqdm(to_download, desc="Model file download"):
+                download_url_to_file(f"{s3_model_loc}/{model_file}", os.path.join(model_dir, model_file))
 
     return model_dir
 
@@ -67,14 +84,10 @@ def get_local_ckpt(model_name, model_dir=False, search_for_ext="bin", download_i
 
     if not 'CAI_DATA_BASE_PATH' in os.environ and not download_if_missing:
         raise FileNotFoundError("CAI data registry path not set and downloading is switched off")
-    data_base_path = os.environ.get('CAI_DATA_BASE_PATH', cai_s3)
-    og_model_name = model_name
     if not model_name.startswith('experiments'):
         model_name = os.path.join('champion_models', model_name)
-    model_name = os.path.join(data_base_path, model_name)
 
-    if download_if_missing and model_name.startswith("https://"):
-        model_name = load_from_s3(og_model_name, model_name)
+    model_name = get_local_model_dir(model_name)
 
     if model_dir:
         return model_name
