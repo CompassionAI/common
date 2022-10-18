@@ -2,7 +2,6 @@ import os
 import glob
 import json
 import yaml
-import shutil
 
 from tqdm.auto import tqdm
 from torch.hub import download_url_to_file, get_dir
