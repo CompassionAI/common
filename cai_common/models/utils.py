@@ -10,7 +10,7 @@ from cai_common.defaults import cai_s3
 
 
 def get_local_model_dir(model_name):
-    """Load the model from the CAI S3 data registry into the Torch Hub temporary directory.
+    """Load a model from the CAI S3 data registry.
     
     Args:
         model_name (:obj:`string`):
@@ -58,6 +58,22 @@ def get_local_model_dir(model_name):
                 download_url_to_file(f"{s3_model_loc}/{model_file}", os.path.join(model_dir, model_file))
 
     return model_dir
+
+
+def get_local_file(file_subpath):
+    """Load a file from the CAI S3 data registry. Will download the file if needed.
+    
+    Args:
+        file_subpath (:obj:`string`):
+            The subpath of the file within the CAI data registry.
+
+    Returns:
+        The local file name.
+    """
+    if os.path.exists(file_subpath):
+        return file_subpath
+    file_dir = get_local_model_dir(os.path.dirname(file_subpath))
+    return os.path.join(file_dir, os.path.basename(file_subpath))
 
 
 def get_local_ckpt(model_name, model_dir=False, search_for_ext="bin", download_if_missing=True):
