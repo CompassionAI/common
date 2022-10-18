@@ -1,9 +1,36 @@
 import os
 import glob
 import json
+import yaml
+import shutil
+
+from tqdm.auto import tqdm
+from torch.hub import download_url_to_file, get_dir
+from cai_common.defaults import cai_s3
 
 
-def get_local_ckpt(model_name, model_dir=False, search_for_ext="bin"):
+def _load_from_s3(model_name, s3_model_loc):
+    # Load the model from the CAI S3 data registry into the Torch Hub temporary directory
+    model_dir = os.path.join(get_dir(), model_name)
+    os.makedirs(model_dir, exist_ok=True)
+    
+    manifest_fn = os.path.join(model_dir, "manifest.yaml")
+    if not os.path.exists(manifest_fn):
+        download_url_to_file(f"{s3_model_loc}/manifest.yaml", manifest_fn)
+    with open(manifest_fn, 'r') as manifest_f:
+        manifest = yaml.safe_load(manifest_f)
+
+    to_download = [
+        fn for fn, f_loc in [(fn, os.path.join(model_dir, fn)) for fn in manifest['inference']]
+            if not os.path.exists(f_loc)
+    ]
+    for model_file in tqdm(to_download, desc="Model file download"):
+        download_url_to_file(f"{s3_model_loc}/{model_file}", os.path.join(model_dir, model_file))
+
+    return model_dir
+
+
+def get_local_ckpt(model_name, model_dir=False, search_for_ext="bin", download_if_missing=True):
     """Convert the name of the model in the CAI data registry to a local checkpoint path.
 
     Args:
@@ -18,18 +45,27 @@ def get_local_ckpt(model_name, model_dir=False, search_for_ext="bin"):
         model_dir (:obj:`bool`, `optional`): Return the model directory, not a candidate file. Useful for Hugging Face
             local loading using from_pretrained.
         search_for_ext (:obj:`string`, `optional`): What extension to search for. Defaults to 'bin'.
+        download_if_missing (:obj:`bool`, `optional`): Download from the CompassionAI S3 repository if missing the local
+            repository. This is expected in inference installations. Defaults to True.
 
     Returns:
         The local directory name you can feed to AutoModel.from_pretrained.
     """
 
-    data_base_path = os.environ['CAI_DATA_BASE_PATH']
+    if not 'CAI_DATA_BASE_PATH' in os.environ and not download_if_missing:
+        raise FileNotFoundError("CAI data registry path not set and downloading is switched off")
+    data_base_path = os.environ.get('CAI_DATA_BASE_PATH', cai_s3)
+    og_model_name = model_name
     if not model_name.startswith('experiments'):
         model_name = os.path.join('champion_models', model_name)
     model_name = os.path.join(data_base_path, model_name)
+
+    if download_if_missing and model_name.startswith("https://"):
+        model_name = _load_from_s3(og_model_name, model_name)
+
     if model_dir:
         return model_name
-    if not '.' in model_name:
+    if os.path.splitext(model_name)[1] == '':
         candidates = glob.glob(os.path.join(model_name, "*." + search_for_ext))
         if len(candidates) == 0:
             raise FileNotFoundError(f"No .{search_for_ext} files found in {model_name}")
