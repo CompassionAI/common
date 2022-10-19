@@ -47,6 +47,12 @@ conda env config vars set CAI_DATA_BASE_PATH=#absolute path to the CompassionAI 
 
 Our code uses these environment variables to load datasets from the registry, output processed datasets and store training results.
 
+You probably also want to install CUDA and PyTorch (>=1.12) with CUDA support - follow the instructions here <https://pytorch.org/get-started/locally/>. You don't need torchvision or torchaudio but it is safe to install them if you like. You can reinstall CUDA-enabled PyTorch with `pip` in your conda environment after installing everything as above.
+
+For fine-tuning, you will need a powerful NVidia GPU. A GTX 1080 might work. We recommend at least an RTX 3080 Ti in a home setup, or a V100 if using a cloud. We have not tested non-NVidia GPUs.
+
+For pre-training, you will need a TPU on GCP. We do not recommend fine-tuning on GPUs. We do not expect it to work on anything less than a DGX-2 or a p3dn.24xlarge instance.
+
 ## Usage
 
 ### Inference
