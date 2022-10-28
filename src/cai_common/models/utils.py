@@ -12,6 +12,10 @@ from cai_common.defaults import cai_s3
 
 logger = logging.getLogger(__name__)
 
+os_data_base_path = os.environ.get('CAI_DATA_BASE_PATH', None)
+if os_data_base_path in {'', '***unset***'}:
+    os_data_base_path = None
+
 
 def _download_file(s3_loc, target_fn):
     try:
@@ -21,7 +25,7 @@ def _download_file(s3_loc, target_fn):
         raise e
 
 
-def get_local_model_dir(model_name):
+def get_local_model_dir(model_name, download_if_missing=True):
     """Load a model from the CAI S3 data registry.
     
     Args:
@@ -29,6 +33,8 @@ def get_local_model_dir(model_name):
             The model name in the CAI data registry. If it starts with 'model_archive', it is assumed to be a path
             within the data registry. Otherwise, it is assumed to be a champion model inside the champion_models
             directory.
+        download_if_missing (:obj:`bool`, `optional`): Download from the CompassionAI S3 repository if missing the local
+            repository. This is expected in inference installations. Defaults to True.
 
     Returns:
         The local directory name you can feed to AutoModel.from_pretrained.
@@ -41,7 +47,7 @@ def get_local_model_dir(model_name):
         model_dir = model_name
         s3_model_loc = None
     else:
-        data_base_path = os.environ.get('CAI_DATA_BASE_PATH', cai_s3)
+        data_base_path = os_data_base_path if os_data_base_path is not None else cai_s3
         if data_base_path.startswith("https://"):
             model_dir = os.path.join(get_dir(), model_name)
             s3_model_loc = os.path.join(data_base_path, model_name)
@@ -57,6 +63,8 @@ def get_local_model_dir(model_name):
         
         manifest_fn = os.path.join(model_dir, "manifest.yaml")
         if not os.path.exists(manifest_fn):
+            if not download_if_missing:
+                raise FileNotFoundError("Model not found locally and download if missing is set to False.")
             _download_file(f"{s3_model_loc}/manifest.yaml", manifest_fn)
         with open(manifest_fn, 'r') as manifest_f:
             manifest = yaml.safe_load(manifest_f)
@@ -66,6 +74,8 @@ def get_local_model_dir(model_name):
                 if not os.path.exists(f_loc)
         ]
         if len(to_download) > 0:
+            if not download_if_missing:
+                raise FileNotFoundError("Model not found locally and download if missing is set to False.")
             for model_file in tqdm(to_download, desc="Downloading model files"):
                 _download_file(f"{s3_model_loc}/{model_file}", os.path.join(model_dir, model_file))
 
@@ -110,7 +120,7 @@ def get_local_ckpt(model_name, model_dir=False, search_for_ext="bin", download_i
         The local directory name you can feed to AutoModel.from_pretrained.
     """
 
-    if not 'CAI_DATA_BASE_PATH' in os.environ and not download_if_missing:
+    if os_data_base_path is None and not download_if_missing:
         raise FileNotFoundError("CAI data registry path not set and downloading is switched off")
     if not model_name.startswith('experiments'):
         model_name = os.path.join('champion_models', model_name)
