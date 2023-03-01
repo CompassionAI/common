@@ -237,7 +237,9 @@ class TeiLoader(CorpusLoader):
         '094-008_toh731-the_sutra_of_tara_who_protects_from_the_eight_fearful_things.xml',
         '094-013_toh736,995-the_incantation_of_parnasabari.xml',
         '100-001_toh846-the_three_part_invitation_tantra.xml',
-        '100-002_toh846a-the_threefold_ritual.xml'}
+        '100-002_toh846a-the_threefold_ritual.xml',
+        '064-002_toh232-the_great_cloud_sutra.xml',
+        '090-040_toh596-the_usnisavijaya_dharani_with_its_ritual_manual.xml'}
     ns = "http://www.tei-c.org/ns/1.0"
     tag_treatments = {
         'term': 'unwrap',
