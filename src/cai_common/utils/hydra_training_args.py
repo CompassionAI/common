@@ -9,7 +9,7 @@ class HydraToHFConverterMixIn:
 
 
     @classmethod
-    def as_hf_training_args(cls, cfg):
+    def as_hf_training_args(cls, cfg, standard_args=None):
         """Converts a Hydra parsed config to a dictionary that can be used to instantiate a Hugging Face base class,
         specified in the static member _hf_base_class.
 
@@ -21,6 +21,17 @@ class HydraToHFConverterMixIn:
             for field in fields(cls._hf_base_class)
             if field.init
         }
+
+        for arg in standard_args[1:]:
+            if '=' not in arg:
+                raise ValueError(f"Bad argument {arg}, no equal sign")
+            arg, val = arg[2:].split("=")
+            if val.isnumeric():
+                val = float(val)
+                if val.is_integer():
+                    val = int(val)
+            filtered_cfg[arg] = val
+
         return cls._hf_base_class(**dict(filtered_cfg))     # pylint: disable=not-callable
 
 
