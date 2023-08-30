@@ -2,7 +2,7 @@ from dataclasses import dataclass, fields
 from transformers import TrainingArguments, Seq2SeqTrainingArguments
 from transformers.trainer_utils import IntervalStrategy, SchedulerType, HubStrategy
 from transformers.training_args import OptimizerNames
-from typing import Optional
+from typing import Optional, Any
 
 
 class HydraToHFConverterMixIn:
@@ -79,3 +79,4 @@ class HydraSeq2SeqTrainingArguments(Seq2SeqTrainingArguments, HydraToHFConverter
     optim: OptimizerNames = OptimizerNames.ADAMW_HF
     hub_strategy: HubStrategy = HubStrategy.EVERY_SAVE
     generation_config: Optional[str] = None
+    lora: Any = None
