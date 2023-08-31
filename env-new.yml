@@ -1,0 +1,48 @@
+name: cai-new
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - python=3.9
+  - pylint
+  - jupyter
+  - jupyterlab
+  - nodejs
+  - jupyterlab-git
+  - nbdime
+  - flake8
+  - pre-commit
+  - tqdm
+  - ipywidgets
+  - dvc
+  - dvc-s3
+  - dvc-gs
+  - pandas>=1.4.2
+  - dask==2022.5.1
+  - distributed
+  - beautifulsoup4>=4.11.1
+  - lxml>=4.8.0
+  - matplotlib>=3.5.2
+  - bokeh>=2.1.1, <3
+  - filelock>=3.7.1
+  - datasets>=2.3.2
+  - sacrebleu>=2.1.0
+  - sentencepiece>=0.1.96
+  - scikit-learn>=1.1.1
+  - tensorboard>=2.9.1
+  - colorama>=0.4.4
+  - psutil>=5.9.1
+  - zarr>=2.12.0
+  - evaluate>=0.2.2
+  - captum
+  - spacy
+  - pip:
+    - pyewts>=0.1.3
+    - torch>=1.11.0
+    - hydra-core>=1.2.0
+    - hydra-colorlog>=1.2.0
+    - pattern
+    - transformers
+    - tokenizers
+    - accelerate
