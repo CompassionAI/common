@@ -1,4 +1,4 @@
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, field
 from transformers import TrainingArguments, Seq2SeqTrainingArguments
 from transformers.trainer_utils import IntervalStrategy, SchedulerType, HubStrategy
 from transformers.training_args import OptimizerNames
@@ -72,6 +72,8 @@ class HydraSeq2SeqTrainingArguments(Seq2SeqTrainingArguments, HydraToHFConverter
 
     _hf_base_class = Seq2SeqTrainingArguments
 
+    lora: Any = None
+
     evaluation_strategy: IntervalStrategy = IntervalStrategy.NO
     lr_scheduler_type: SchedulerType = SchedulerType.LINEAR
     logging_strategy: IntervalStrategy = IntervalStrategy.STEPS
@@ -79,4 +81,6 @@ class HydraSeq2SeqTrainingArguments(Seq2SeqTrainingArguments, HydraToHFConverter
     optim: OptimizerNames = OptimizerNames.ADAMW_HF
     hub_strategy: HubStrategy = HubStrategy.EVERY_SAVE
     generation_config: Optional[str] = None
-    lora: Any = None
+    debug: Any = None
+    sharded_ddp: Any = field(default_factory=list)
+    fsdp: Any = field(default_factory=list)
