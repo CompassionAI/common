@@ -3,6 +3,7 @@ from transformers import TrainingArguments, Seq2SeqTrainingArguments
 from transformers.trainer_utils import IntervalStrategy, SchedulerType, HubStrategy
 from transformers.training_args import OptimizerNames
 from typing import Optional, Any
+from omegaconf import ListConfig
 
 
 class HydraToHFConverterMixIn:
@@ -17,8 +18,13 @@ class HydraToHFConverterMixIn:
         This is needed because of a bug in Hydra: it doesn't ignore fields with init=False, such as _n_gpu.
         """
 
+        def __process(field):
+            if isinstance(field, ListConfig):
+                return list(field)
+            return field
+
         filtered_cfg = {
-            field.name: cfg[field.name]
+            field.name: __process(cfg[field.name])
             for field in fields(cls._hf_base_class)
             if field.init
         }
@@ -81,6 +87,6 @@ class HydraSeq2SeqTrainingArguments(Seq2SeqTrainingArguments, HydraToHFConverter
     optim: OptimizerNames = OptimizerNames.ADAMW_HF
     hub_strategy: HubStrategy = HubStrategy.EVERY_SAVE
     generation_config: Optional[str] = None
-    debug: Any = None
+    debug: Any = field(default_factory=list)
     sharded_ddp: Any = field(default_factory=list)
     fsdp: Any = field(default_factory=list)
