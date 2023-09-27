@@ -79,6 +79,7 @@ class HydraSeq2SeqTrainingArguments(Seq2SeqTrainingArguments, HydraToHFConverter
     _hf_base_class = Seq2SeqTrainingArguments
 
     lora: Any = None
+    label_smoothing: float = 0
 
     evaluation_strategy: IntervalStrategy = IntervalStrategy.NO
     lr_scheduler_type: SchedulerType = SchedulerType.LINEAR
